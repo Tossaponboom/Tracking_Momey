@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ระบบลงคุมเอกสาร PEA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            pea: { 50: '#f7ebfa', 100: '#edd2f2', 500: '#9438ad', 600: '#741D88', 700: '#5c176b' }
+          },
+          fontFamily: { sans: ['Prompt', 'sans-serif'] },
+          animation: {
+            blob: "blob 15s infinite alternate ease-in-out",
+          },
+          keyframes: {
+            blob: {
+              "0%": { transform: "translate(0px, 0px) scale(1)" },
+              "33%": { transform: "translate(50px, -50px) scale(1.1)" },
+              "66%": { transform: "translate(-40px, 40px) scale(0.9)" },
+              "100%": { transform: "translate(0px, 0px) scale(1)" },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { 
+      background-color: #f8fafc;
+      background-attachment: fixed; 
+      overflow-x: hidden; /* ป้องกันแถบเลื่อนแนวนอนจากแสงที่ล้นขอบ */
+    }
+    
+    /* สำหรับหน่วงเวลา Animation ของก้อนแสง */
+    .animation-delay-2000 { animation-delay: 2s; }
+    .animation-delay-4000 { animation-delay: 4s; }
+
+    /* ================= ELECTRIC BORDER EFFECT ================= */
+    .electric-wrapper {
+      position: relative;
+      border-radius: 1.5rem;
+      overflow: hidden;
+      padding: 3px; 
+      box-shadow: 0 10px 40px rgba(116, 29, 136, 0.15);
+    }
+    
+    .electric-wrapper::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: conic-gradient(
+        transparent 0%, transparent 70%, 
+        #9438ad 80%, #ffffff 90%, #9438ad 100%
+      );
+      animation: spin-electric 4s linear infinite;
+      z-index: 0;
+    }
+
+    .electric-content {
+      position: relative;
+      background: #ffffff; /* เปลี่ยนเป็นสีขาวทึบ 100% เพื่อบล็อกแสงหมุนวนด้านใน */
+      border-radius: calc(1.5rem - 3px);
+      z-index: 1;
+      height: 100%; width: 100%;
+    }
+
+    @keyframes spin-electric {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    /* ========================================================= */
+
+    .modal-enter { animation: modalFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    .ios-input { background-color: rgba(243, 244, 246, 0.8); border: 1px solid transparent; transition: all 0.2s ease; }
+    .ios-input:focus { background-color: #fff; border-color: #741D88; box-shadow: 0 0 0 4px rgba(116, 29, 136, 0.1); outline: none; }
+    .loader-ios { width: 32px; height: 32px; border: 3px solid rgba(116, 29, 136, 0.2); border-top-color: #741D88; border-radius: 50%; animation: spin 1s infinite linear; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 text-gray-800 relative">
+
+  <!-- ================= BACKGROUND ELEMENTS ================= -->
+  <!-- 1. Tech Grid (ลายตารางบางๆ) -->
+  <div class="fixed inset-0 z-[-2] pointer-events-none opacity-40 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+  
+  <!-- 2. Floating Glow Blobs (ดวงไฟเรืองแสง) -->
+  <div class="fixed top-[-10%] left-[-5%] w-[30rem] h-[30rem] bg-pea-600/20 rounded-full mix-blend-multiply filter blur-[100px] animate-blob z-[-1] pointer-events-none"></div>
+  <div class="fixed top-[15%] right-[-10%] w-[35rem] h-[35rem] bg-fuchsia-500/15 rounded-full mix-blend-multiply filter blur-[120px] animate-blob animation-delay-2000 z-[-1] pointer-events-none"></div>
+  <div class="fixed bottom-[-20%] left-[20%] w-[25rem] h-[25rem] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[100px] animate-blob animation-delay-4000 z-[-1] pointer-events-none"></div>
+  <!-- ======================================================= -->
+
+  <!-- ================= SECTION: LOGIN ================= -->
+  <div id="loginSection" class="w-full max-w-md electric-wrapper transition-all duration-500">
+    <div class="electric-content p-8 relative overflow-hidden">
+      <!-- แถบสีตกแต่งด้านบนสุด -->
+      <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pea-500 to-pea-700"></div>
+      
+      <div class="text-center mb-8 mt-2">
+        <div class="mx-auto w-24 h-24 mb-4 flex items-center justify-center rounded-3xl bg-gradient-to-br from-white to-pea-50 border border-pea-200 shadow-sm relative group">
+          <svg class="w-14 h-14 text-pea-600 drop-shadow-sm relative z-10" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd"></path></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900">ลงคุมเอกสาร <span class="text-pea-600">PEA</span></h2>
+        <p class="text-gray-500 text-sm mt-1">กรุณาเข้าสู่ระบบเพื่อดำเนินการ</p>
+      </div>
+      
+      <div class="mb-5">
+        <label class="block text-gray-700 text-sm font-semibold mb-2 ml-1">รหัสผู้ใช้งาน</label>
+        <input id="loginUser" type="text" placeholder="รหัสพนักงาน" class="ios-input w-full px-5 py-4 rounded-2xl text-lg placeholder-gray-400">
+      </div>
+      <div class="mb-8">
+        <label class="block text-gray-700 text-sm font-semibold mb-2 ml-1">รหัสผ่าน</label>
+        <input id="loginPass" type="password" placeholder="••••••••" class="ios-input w-full px-5 py-4 rounded-2xl text-lg placeholder-gray-400">
+      </div>
+      <button onclick="handleLogin()" class="w-full bg-pea-600 hover:bg-pea-700 active:scale-95 text-white font-bold py-4 px-4 rounded-2xl transition-all duration-200 shadow-lg shadow-pea-600/30 text-lg">
+        เข้าสู่ระบบ
+      </button>
+      <div class="mt-6 border-t border-gray-200/60 pt-6">
+        <button onclick="showTrackingSection()" class="w-full bg-white/50 hover:bg-white active:scale-95 text-pea-600 font-bold py-4 px-4 rounded-2xl border border-pea-200 transition-all duration-200 text-lg flex items-center justify-center gap-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          ติดตามสถานะเอกสาร
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SECTION: TRACKING ================= -->
+  <div id="trackingSection" class="w-full max-w-md electric-wrapper hidden transition-all duration-500">
+    <div class="electric-content p-8 relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pea-500 to-pea-700"></div>
+      <button onclick="hideTrackingSection()" class="absolute top-5 right-5 text-gray-400 hover:text-pea-600 transition-colors p-1 bg-gray-50 rounded-full">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+      <div class="text-center mb-6 mt-2">
+        <div class="mx-auto w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900">ติดตามสถานะเอกสาร</h2>
+        <p class="text-gray-500 text-sm mt-1">กรอกหมายเลขเอกสารที่ท่านต้องการค้นหา</p>
+      </div>
+      <div class="mb-6 flex gap-2">
+        <input id="trackDocNo" type="text" placeholder="เช่น 3371" class="ios-input w-full px-5 py-4 rounded-2xl text-lg placeholder-gray-400 font-medium text-center">
+      </div>
+      <button onclick="searchDocument()" class="w-full bg-pea-600 hover:bg-pea-700 active:scale-95 text-white font-bold py-4 px-4 rounded-2xl transition-all duration-200 shadow-lg shadow-pea-600/30 text-lg mb-6 flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        ค้นหาเอกสาร
+      </button>
+      <div id="trackingResult" class="hidden">
+        <div class="bg-gray-50/80 rounded-2xl p-5 border border-gray-100 shadow-inner">
+          <div class="text-center mb-4 pb-4 border-b border-gray-200/60">
+            <p class="text-xs text-gray-500 mb-2 font-semibold tracking-wider">สถานะปัจจุบัน</p>
+            <div id="trackStatus" class="inline-block px-5 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl text-lg shadow-sm">-</div>
+          </div>
+          <div class="space-y-3 text-sm">
+            <div class="flex justify-between items-center"><span class="text-gray-500">เลขที่เอกสาร:</span><span id="trackResNo" class="font-bold text-gray-800 text-base">-</span></div>
+            <div class="flex justify-between items-center"><span class="text-gray-500">วันที่:</span><span id="trackResDate" class="font-semibold text-gray-800">-</span></div>
+            <div class="flex justify-between items-start"><span class="text-gray-500 flex-shrink-0">ผู้เบิก:</span><span id="trackResName" class="font-semibold text-gray-800 text-right">-</span></div>
+            <div class="flex justify-between items-start"><span class="text-gray-500 flex-shrink-0">รายการ:</span><span id="trackResItem" class="font-semibold text-gray-800 text-right truncate max-w-[150px]">-</span></div>
+            <div class="flex justify-between items-start"><span class="text-gray-500 flex-shrink-0">รายละเอียด:</span><span id="trackResDetail" class="font-semibold text-gray-800 text-right truncate max-w-[150px] cursor-help">-</span></div>
+            <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100"><span class="text-gray-500">จำนวนเงิน:</span><span id="trackResAmount" class="font-bold text-pea-600 text-base">฿-</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SECTION: FORM ================= -->
+  <div id="formSection" class="w-full max-w-2xl electric-wrapper hidden my-4 md:my-8 transition-all duration-500">
+    <div class="electric-content p-6 md:p-10 relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pea-500 to-pea-700"></div>
+      <div class="flex justify-between items-center mb-8 pb-4 border-b border-gray-200/60">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-gradient-to-br from-white to-pea-50 border border-pea-200 shadow-sm">
+            <svg class="w-7 h-7 text-pea-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.381z" clip-rule="evenodd"></path></svg>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900">ฟอร์มลงคุมเอกสาร</h2>
+            <p class="text-pea-600 text-sm font-medium">การไฟฟ้าส่วนภูมิภาค</p>
+          </div>
+        </div>
+        <button onclick="confirmLogout()" class="w-10 h-10 bg-red-50 text-red-500 rounded-full flex items-center justify-center hover:bg-red-100 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        </button>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+        <div><label class="block text-gray-700 text-sm font-semibold mb-2 ml-1">รหัสพนักงาน</label><input id="payerId" type="text" readonly class="w-full px-4 py-3 bg-gray-100/50 border border-gray-200 rounded-2xl text-gray-500 cursor-not-allowed"></div>
+        <div><label class="block text-gray-700 text-sm font-semibold mb-2 ml-1">ชื่อ-นามสกุล</label><input id="payerName" type="text" readonly class="w-full px-4 py-3 bg-gray-100/50 border border-gray-200 rounded-2xl text-gray-500 cursor-not-allowed"></div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+        <div><label class="block text-gray-700 text-sm font-semibold mb-2 ml-1">วันที่ลงคุม</label><input id="docDate" type="text" readonly class="w-full px-4 py-3 bg-gray-100/50 border border-gray-200 rounded-2xl text-gray-600 font-medium cursor-not-allowed"></div>
+        <div>
+          <label class="block text-gray-700 text-sm font-semibold mb-2 ml-1">สถานะ</label>
+          <div class="w-full px-4 py-3 bg-green-50 border border-green-100 rounded-2xl text-green-600 font-bold flex items-center">
+            <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span> ลงคุม<input id="docStatus" type="hidden" value="ลงคุม">
+          </div>
+        </div>
+      </div>
+      <div class="mb-5 relative">
+        <label class="block text-gray-700 text-sm font-semibold mb-2 ml-1">แผนก <span class="text-red-500">*</span></label>
+        <select id="docDivision" class="ios-input w-full px-4 py-4 rounded-2xl text-gray-800 appearance-none bg-no-repeat" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-position: right 1rem top 50%; background-size: 0.65rem auto;"><option value="">-- กำลังโหลดข้อมูลแผนก... --</option></select>
+      </div>
+      <div class="mb-5">
+        <label class="block text-gray-700 text-sm font-semibold mb-2 ml-1">รายการเบิก <span class="text-red-500">*</span></label>
+        <select id="docItem" class="ios-input w-full px-4 py-4 rounded-2xl text-gray-800 appearance-none bg-no-repeat" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-position: right 1rem top 50%; background-size: 0.65rem auto;"><option value="">-- กรุณาเลือกรายการ --</option></select>
+      </div>
+      <div class="mb-5">
+        <label class="block text-gray-700 text-sm font-semibold mb-2 ml-1">รายละเอียดการเบิก <span class="text-red-500">*</span></label>
+        <input id="docDetails" type="text" placeholder="เช่น ค่ารักษาพยาบาล รพ...." class="ios-input w-full px-4 py-4 rounded-2xl text-gray-800">
+      </div>
+      <div class="mb-8 relative">
+        <label class="block text-gray-700 text-sm font-semibold mb-2 ml-1">จำนวนเงิน (บาท) <span class="text-red-500">*</span></label>
+        <span class="absolute left-5 top-[2.7rem] text-gray-500 font-medium text-lg">฿</span>
+        <input id="docAmount" type="number" step="0.01" placeholder="0.00" class="ios-input w-full pl-10 pr-4 py-4 rounded-2xl text-gray-800 text-xl font-medium">
+      </div>
+      <button onclick="submitForm()" class="w-full bg-pea-600 hover:bg-pea-700 active:scale-95 text-white font-bold py-4 px-4 rounded-2xl transition-all duration-200 shadow-lg shadow-pea-600/30 text-lg">
+        บันทึกและออกเลขเอกสาร
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+  <div id="loadingModal" class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center hidden z-[60]"><div class="bg-white/95 p-8 rounded-3xl flex flex-col items-center shadow-2xl modal-enter"><div class="loader-ios mb-4"></div><span class="text-pea-700 font-semibold text-lg" id="loadingText">กำลังประมวลผล...</span></div></div>
+  <div id="alertModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center hidden z-[70] p-4"><div class="bg-white/95 backdrop-blur-xl rounded-[28px] shadow-2xl max-w-sm w-full text-center overflow-hidden modal-enter"><div class="p-8"><div id="alertIcon"></div><h3 class="text-xl font-bold text-gray-900 mb-2" id="alertTitle">แจ้งเตือน</h3><p class="text-gray-500 text-sm leading-relaxed" id="alertMessage">ข้อความ</p></div><div class="border-t border-gray-200"><button onclick="closeAlert()" class="w-full text-pea-600 hover:bg-gray-50 font-bold py-4 transition-colors">ตกลง</button></div></div></div>
+  <div id="successModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center hidden z-[80] p-4"><div class="bg-white/95 backdrop-blur-xl rounded-[28px] shadow-2xl p-8 max-w-sm w-full text-center modal-enter"><div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-5 border-4 border-white shadow-sm"><svg class="h-10 w-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div><h3 class="text-2xl font-bold text-gray-900 mb-2">บันทึกสำเร็จ</h3><p class="text-gray-500 text-sm mb-5">หมายเลขเอกสารอ้างอิงของคุณคือ</p><div class="bg-gray-50 rounded-2xl py-6 mb-8 border border-gray-100 shadow-inner"><span id="modalDocNo" class="text-5xl font-black text-pea-600 tracking-wider">0000</span></div><button onclick="closeSuccessModal()" class="w-full bg-pea-600 hover:bg-pea-700 text-white font-bold py-4 rounded-2xl transition-all shadow-md active:scale-95">เสร็จสิ้น</button></div></div>
+  <div id="confirmModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center hidden z-[70] p-4"><div class="bg-white/95 backdrop-blur-xl rounded-[28px] shadow-2xl max-w-xs w-full text-center overflow-hidden modal-enter"><div class="p-6"><h3 class="text-xl font-bold text-gray-900 mb-2">ออกจากระบบ</h3><p class="text-gray-500 text-sm">คุณต้องการออกจากระบบใช่หรือไม่?</p></div><div class="flex border-t border-gray-200"><button onclick="closeConfirmModal()" class="w-1/2 border-r border-gray-200 text-gray-500 hover:bg-gray-50 font-medium py-4 transition-colors">ยกเลิก</button><button onclick="executeLogout()" class="w-1/2 text-red-500 hover:bg-gray-50 font-bold py-4 transition-colors">ออกจากระบบ</button></div></div></div>
+
+  <script>
+    // ⚠️ นำ URL ของ Google Apps Script ที่ Deploy เสร็จแล้วมาวางในเครื่องหมายคำพูดด้านล่างนี้
+    const API_URL = "https://script.google.com/macros/s/AKfycbwnYEhSgf2XNAEesuBqIt8iwKOZEOhURwFjNPi33biaa2TDci35PTPDgLfPvSnVMl73/exec"; 
+
+    // รายการเบิก
+    const itemsList = ["51010010 - ค่าซื้อไฟฟ้า-กฟผ.", "51010060 - ค่าซื้อไฟฟ้า-Rooftop", "52010010 - เงินเดือนพนักงาน", "52010030 - OT พนักงาน", "52010080 - ค่าตอบแทนการอยู่เวรปฏิบัติการระบบไฟฟ้าแบบเฝ้าระวัง", "52010990 - ค่าตอบแทนอื่น - พนง.", "52011020 - เงินสมทบ กสช.", "52012050 - เงินเพิ่มพิเศษอยู่กะ", "52012060 - ค่าโทรศัพท์บ้านพัก", "52012070 - ค่าโทรศัพท์มือถือ", "52020010 - เงินช่วยเหลือค่าไฟฯ", "52020020 - เงินช่วยฯUniform พนง", "52020030 - เงินช่วยฯค่าเรียนบุต", "52020040 - เงินช่วยเหลือบุตร", "52020990 - เงินช่วยเหลืออื่น", "52021010 - ค่ารักษาพยาบาล-พนง.", "52021020 - ค่ารักษา-ครอบครัวพนง", "52022010 - ค่าพาหนะเดินทาง-พนง.", "52022020 - ค่าเบี้ยเลี้ยง-พนง.", "52022030 - ค่าที่พัก-พนักงาน", "52022050 - ค่าชดเชยการใช้พาหนะฯ", "52029010 - ค่าเช่าบ้าน", "52030030 - คชจ. ประชุมชี้แจง", "53021020 - ค่าประชาสัมพันธ์อื่น", "53030010 - ค่าวัสดุสำนักงาน", "53030030 - ค่าวัสดุเบ็ดเตล็ดฯ", "53031010 - ค่าน้ำดื่ม", "53031020 - ค่าน้ำประปา", "53031030 - ค่าไฟฟ้า", "53032010 - ค่าใช้บริการโทรศัพท์", "53032020 - ค่าบำรุงฯโทรศัพท์", "53032060 - ค่าไปรษณีย์", "53033020 - ค่าเช่าสิ่งปลูกสร้าง", "53034010 - ค่าจ้างเหมาความสะอาด", "53034020 - ค่ารักษาความปลอดภัย", "53034040 - ค่าบำรุงฯบริเวณ สนง.", "53039010 - ค่าเชื้อเพลิงยานพาหฯ", "53039020 - ค่าหนังสือและสื่อฯ", "53039990 - ค่าใช้จ่ายเบ็ดเตล็ด", "53051040 - ค่าซ่อมฯบำรุงฯ-อาคาร", "53051050 - ค่าซ่อม/บำรุงฯ-ยานฯ", "53051060 - ค่าซ่อม/บำรุงฯ-คอมฯ", "53051090 - วัสดุเบ็ดเตล็ดช่าง", "53051100 - ค่าซ่อมอุปกรณ์ในสนง.", "53051120 - อุปกรณ์ความปลอดภัย", "53051990 - ค่าซ่อมฯ/บำรุงรักษา", "53052030 - คชจ. ดนง.ก่อสร้าง", "53063010 - ค่ารับรอง", "53064010 - ค่าภาษีสินทรัพย์", "53064020 - ภาษีและค่าFeeพาหนะ", "53065010 - เงินชดเชยมนุษยธรรม", "53069020 - ค่าขนส่ง ขนย้าย", "53069030 - ค่าจ้างเหมายานพาหนะ", "53069090 - ค่าปป.ส/ทที่มิใช่กฟภ", "53069990 - ค่าใช้จ่ายอื่น", "54020020 - Dep.-อาคารสำนักงาน", "54040010 - Dep.-สายส่ง/จำหน่าย", "54040030 - Dep.-อุปกรณ์สถานี", "54040040 - Dep-มป.ผ่านการใช้งาน", "54040050 - Dep-มต.ผ่านการใช้งาน", "54050010 - Dep.-ตกแต่ง สนง.", "54050020 - Dep-อุปกรณ์ประจำสนง.", "54050030 - Dep.-เมนเฟรม/มินิคอม", "54050040 - Dep.-PC และอุปกรณ์", "54051020 - Dep.-Equip.โรงซ่อม", "54051040 - Dep.-Equip.เบ็ดเตล็ด", "54052010 - Dep.-อุปกรณ์สื่อสาร", "54052020 - Dep.-สายใยแก้วภายนอก", "54060030 - Dep.-รถยนต์บรรทุก", "54060040 - Dep.-ยานพาหนะอื่น", "54070010 - Amort.-โปรแกรมคอมฯ", "54080010 - Dep.ROUที่ดินส่วนปป.", "54080020 - Dep.ROUอาคาร สปส.", "54080060 - Dep.ROUยานพาหนะ", "99999999 - ดัมมี่งบประมาณ"];
+
+    // ฟังก์ชันเชื่อมต่อกับ Google Apps Script (Fetch API)
+    async function fetchAPI(action, payload = {}) {
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: action, payload: payload })
+        });
+        return await response.json();
+      } catch (error) {
+        return { success: false, message: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: ' + error.message };
+      }
+    }
+
+    window.onload = () => {
+      const itemSelect = document.getElementById('docItem');
+      itemsList.forEach(item => { itemSelect.add(new Option(item, item)); });
+
+      fetchAPI('getDivisions').then(res => {
+        const divSelect = document.getElementById('docDivision');
+        divSelect.innerHTML = '<option value="">-- กรุณาเลือกแผนก --</option>'; 
+        if(res.success && res.data) {
+          res.data.forEach(div => divSelect.add(new Option(div, div)));
+        }
+      });
+    };
+
+    function getCurrentDateFormatted() {
+      const today = new Date();
+      return `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+    }
+
+    // --- UI Helpers ---
+    function showLoading(text) { document.getElementById('loadingText').textContent = text; document.getElementById('loadingModal').classList.remove('hidden'); }
+    function hideLoading() { document.getElementById('loadingModal').classList.add('hidden'); }
+    function showAlert(title, message, isError = true) {
+      hideLoading(); document.getElementById('alertTitle').textContent = title; document.getElementById('alertMessage').textContent = message;
+      const icon = document.getElementById('alertIcon');
+      if (isError) {
+        icon.className = "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 text-red-500 mb-4";
+        icon.innerHTML = `<svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+      } else {
+        icon.className = "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 text-blue-500 mb-4";
+        icon.innerHTML = `<svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+      }
+      document.getElementById('alertModal').classList.remove('hidden');
+    }
+    function closeAlert() { document.getElementById('alertModal').classList.add('hidden'); }
+    function showSuccess(docNo) { hideLoading(); document.getElementById('modalDocNo').textContent = docNo; document.getElementById('successModal').classList.remove('hidden'); }
+    function closeSuccessModal() { document.getElementById('successModal').classList.add('hidden'); document.getElementById('docDivision').value = ""; document.getElementById('docItem').value = ""; document.getElementById('docDetails').value = ""; document.getElementById('docAmount').value = ""; }
+
+    // --- Tracking Logic ---
+    function showTrackingSection() { document.getElementById('loginSection').classList.add('hidden'); document.getElementById('trackingSection').classList.remove('hidden'); document.getElementById('trackingResult').classList.add('hidden'); document.getElementById('trackDocNo').value = ""; }
+    function hideTrackingSection() { document.getElementById('trackingSection').classList.add('hidden'); document.getElementById('loginSection').classList.remove('hidden'); }
+    
+    async function searchDocument() {
+      const docNo = document.getElementById('trackDocNo').value.trim();
+      if (!docNo) return showAlert("ข้อมูลไม่ครบ", "กรุณากรอกหมายเลขเอกสารที่ต้องการค้นหา");
+      
+      showLoading("กำลังค้นหาข้อมูล...");
+      document.getElementById('trackingResult').classList.add('hidden');
+
+      const response = await fetchAPI('trackDocument', { docNo: docNo });
+      hideLoading();
+      
+      if (response.success) {
+        const data = response.data;
+        document.getElementById('trackResNo').textContent = data.docNo;
+        document.getElementById('trackResDate').textContent = data.dateStr;
+        document.getElementById('trackResName').textContent = data.payerName;
+        document.getElementById('trackResItem').textContent = data.item;
+        
+        const detailText = (data.details && data.details !== 'undefined') ? data.details : '-';
+        document.getElementById('trackResDetail').textContent = detailText;
+        document.getElementById('trackResDetail').title = detailText !== '-' ? detailText : '';
+        
+        let amountNum = parseFloat(data.amount.replace(/,/g, ''));
+        document.getElementById('trackResAmount').textContent = isNaN(amountNum) ? "฿" + data.amount : "฿" + amountNum.toLocaleString('th-TH', {minimumFractionDigits: 2});
+
+        const statusEl = document.getElementById('trackStatus');
+        statusEl.textContent = data.status;
+        statusEl.className = "inline-block px-5 py-2 font-bold rounded-xl text-lg shadow-sm ";
+        if (data.status.includes('บป') || data.status.includes('เสร็จ') || data.status.includes('อนุมัติ')) statusEl.className += "bg-blue-100 text-blue-700 border border-blue-200";
+        else if (data.status.includes('แก้') || data.status.includes('ยกเลิก') || data.status.includes('กลับ')) statusEl.className += "bg-red-100 text-red-700 border border-red-200";
+        else statusEl.className += "bg-green-100 text-green-700 border border-green-200";
+
+        document.getElementById('trackingResult').classList.remove('hidden');
+      } else {
+        showAlert("ไม่พบข้อมูล", response.message);
+      }
+    }
+
+    // --- Core Logic ---
+    async function handleLogin() {
+      const user = document.getElementById('loginUser').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
+      if (!user || !pass) return showAlert("ข้อมูลไม่ครบถ้วน", "กรุณากรอกรหัสผู้ใช้งานและรหัสผ่านให้ครบถ้วน");
+
+      showLoading("กำลังตรวจสอบสิทธิ์...");
+      const response = await fetchAPI('verifyLogin', { username: user, password: pass });
+      hideLoading();
+
+      if (response.success) {
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('formSection').classList.remove('hidden');
+        document.getElementById('payerId').value = user;
+        document.getElementById('payerName').value = response.name;
+        document.getElementById('docDate').value = getCurrentDateFormatted();
+      } else {
+        showAlert("เข้าสู่ระบบล้มเหลว", response.message);
+      }
+    }
+
+    function confirmLogout() { document.getElementById('confirmModal').classList.remove('hidden'); }
+    function closeConfirmModal() { document.getElementById('confirmModal').classList.add('hidden'); }
+    function executeLogout() { closeConfirmModal(); document.getElementById('loginUser').value = ""; document.getElementById('loginPass').value = ""; document.getElementById('loginSection').classList.remove('hidden'); document.getElementById('formSection').classList.add('hidden'); }
+
+    async function submitForm() {
+      const formData = {
+        payerId: document.getElementById('payerId').value,
+        payerName: document.getElementById('payerName').value,
+        dateStr: document.getElementById('docDate').value,
+        status: document.getElementById('docStatus').value,
+        division: document.getElementById('docDivision').value,
+        item: document.getElementById('docItem').value,
+        details: document.getElementById('docDetails').value.trim(),
+        amount: document.getElementById('docAmount').value
+      };
+
+      if (!formData.division || !formData.item || !formData.details || !formData.amount) return showAlert("ข้อมูลไม่ครบถ้วน", "กรุณากรอกข้อมูลในช่องที่มีเครื่องหมาย * ให้ครบทุกช่อง");
+
+      showLoading("กำลังบันทึกข้อมูล...");
+      const response = await fetchAPI('saveData', formData);
+      hideLoading();
+
+      if (response.success) showSuccess(response.docNo);
+      else showAlert("เกิดข้อผิดพลาด", response.message);
+    }
+  </script>
+</body>
+</html>
