@@ -231,7 +231,11 @@
   <div id="confirmModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center hidden z-[70] p-4"><div class="bg-white/95 backdrop-blur-xl rounded-[28px] shadow-2xl max-w-xs w-full text-center overflow-hidden modal-enter"><div class="p-6"><h3 class="text-xl font-bold text-gray-900 mb-2">ออกจากระบบ</h3><p class="text-gray-500 text-sm">คุณต้องการออกจากระบบใช่หรือไม่?</p></div><div class="flex border-t border-gray-200"><button onclick="closeConfirmModal()" class="w-1/2 border-r border-gray-200 text-gray-500 hover:bg-gray-50 font-medium py-4 transition-colors">ยกเลิก</button><button onclick="executeLogout()" class="w-1/2 text-red-500 hover:bg-gray-50 font-bold py-4 transition-colors">ออกจากระบบ</button></div></div></div>
   <script>
     // ⚠️ นำ URL ของ Google Apps Script ที่ Deploy เสร็จแล้วมาวางในเครื่องหมายคำพูดด้านล่างนี้ ขอให้ผ่านสักที
-    const API_URL = "https://script.google.com/macros/s/AKfycbxeZUNJHh2QpfMwylKgedcCbxcwaMiHAzBZ6FyeSG9yL83cRt0M_6V80tXp05FpeOYb/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbxeZUNJHh2QpfMwylKgedcCbxcwaMiHAzBZ6FyeSG9yL83cRt0M_6V80tXp05FpeOYb/exec";
+    let CURRENT_USER = {
+        payerId: '',
+        payerName: ''
+    };
     // รายการเบิก
     const itemsList = ["51010010 - ค่าซื้อไฟฟ้า-กฟผ.", "51010060 - ค่าซื้อไฟฟ้า-Rooftop", "52010010 - เงินเดือนพนักงาน", "52010030 - OT พนักงาน", "52010080 - ค่าตอบแทนการอยู่เวรปฏิบัติการระบบไฟฟ้าแบบเฝ้าระวัง", "52010990 - ค่าตอบแทนอื่น - พนง.", "52011020 - เงินสมทบ กสช.", "52012050 - เงินเพิ่มพิเศษอยู่กะ", "52012060 - ค่าโทรศัพท์บ้านพัก", "52012070 - ค่าโทรศัพท์มือถือ", "52020010 - เงินช่วยเหลือค่าไฟฯ", "52020020 - เงินช่วยฯUniform พนง", "52020030 - เงินช่วยฯค่าเรียนบุต", "52020040 - เงินช่วยเหลือบุตร", "52020990 - เงินช่วยเหลืออื่น", "52021010 - ค่ารักษาพยาบาล-พนง.", "52021020 - ค่ารักษา-ครอบครัวพนง", "52022010 - ค่าพาหนะเดินทาง-พนง.", "52022020 - ค่าเบี้ยเลี้ยง-พนง.", "52022030 - ค่าที่พัก-พนักงาน", "52022050 - ค่าชดเชยการใช้พาหนะฯ", "52029010 - ค่าเช่าบ้าน", "52030030 - คชจ. ประชุมชี้แจง", "53021020 - ค่าประชาสัมพันธ์อื่น", "53030010 - ค่าวัสดุสำนักงาน", "53030030 - ค่าวัสดุเบ็ดเตล็ดฯ", "53031010 - ค่าน้ำดื่ม", "53031020 - ค่าน้ำประปา", "53031030 - ค่าไฟฟ้า", "53032010 - ค่าใช้บริการโทรศัพท์", "53032020 - ค่าบำรุงฯโทรศัพท์", "53032060 - ค่าไปรษณีย์", "53033020 - ค่าเช่าสิ่งปลูกสร้าง", "53034010 - ค่าจ้างเหมาความสะอาด", "53034020 - ค่ารักษาความปลอดภัย", "53034040 - ค่าบำรุงฯบริเวณ สนง.", "53039010 - ค่าเชื้อเพลิงยานพาหฯ", "53039020 - ค่าหนังสือและสื่อฯ", "53039990 - ค่าใช้จ่ายเบ็ดเตล็ด", "53051040 - ค่าซ่อมฯบำรุงฯ-อาคาร", "53051050 - ค่าซ่อม/บำรุงฯ-ยานฯ", "53051060 - ค่าซ่อม/บำรุงฯ-คอมฯ", "53051090 - วัสดุเบ็ดเตล็ดช่าง", "53051100 - ค่าซ่อมอุปกรณ์ในสนง.", "53051120 - อุปกรณ์ความปลอดภัย", "53051990 - ค่าซ่อมฯ/บำรุงรักษา", "53052030 - คชจ. ดนง.ก่อสร้าง", "53063010 - ค่ารับรอง", "53064010 - ค่าภาษีสินทรัพย์", "53064020 - ภาษีและค่าFeeพาหนะ", "53065010 - เงินชดเชยมนุษยธรรม", "53069020 - ค่าขนส่ง ขนย้าย", "53069030 - ค่าจ้างเหมายานพาหนะ", "53069090 - ค่าปป.ส/ทที่มิใช่กฟภ", "53069990 - ค่าใช้จ่ายอื่น", "54020020 - Dep.-อาคารสำนักงาน", "54040010 - Dep.-สายส่ง/จำหน่าย", "54040030 - Dep.-อุปกรณ์สถานี", "54040040 - Dep-มป.ผ่านการใช้งาน", "54040050 - Dep-มต.ผ่านการใช้งาน", "54050010 - Dep.-ตกแต่ง สนง.", "54050020 - Dep-อุปกรณ์ประจำสนง.", "54050030 - Dep.-เมนเฟรม/มินิคอม", "54050040 - Dep.-PC และอุปกรณ์", "54051020 - Dep.-Equip.โรงซ่อม", "54051040 - Dep.-Equip.เบ็ดเตล็ด", "54052010 - Dep.-อุปกรณ์สื่อสาร", "54052020 - Dep.-สายใยแก้วภายนอก", "54060030 - Dep.-รถยนต์บรรทุก", "54060040 - Dep.-ยานพาหนะอื่น", "54070010 - Amort.-โปรแกรมคอมฯ", "54080010 - Dep.ROUที่ดินส่วนปป.", "54080020 - Dep.ROUอาคาร สปส.", "54080060 - Dep.ROUยานพาหนะ", "99999999 - ดัมมี่งบประมาณ"];
     // ฟังก์ชันเชื่อมต่อกับ Google Apps Script (Fetch API)
@@ -282,12 +286,34 @@
     function showSuccess(docNo) { hideLoading(); document.getElementById('modalDocNo').textContent = docNo; document.getElementById('successModal').classList.remove('hidden'); }
     function closeSuccessModal() { document.getElementById('successModal').classList.add('hidden'); document.getElementById('docDivision').value = ""; document.getElementById('docItem').value = ""; document.getElementById('docDetails').value = ""; document.getElementById('docAmount').value = ""; }
     // --- Tracking Logic ---
-    function showTrackingSection() { document.getElementById('loginSection').classList.add('hidden'); document.getElementById('trackingSection').classList.remove('hidden'); document.getElementById('trackingResult').classList.add('hidden'); document.getElementById('trackDocNo').value = ""; }
-    function hideTrackingSection() { document.getElementById('trackingSection').classList.add('hidden'); document.getElementById('loginSection').classList.remove('hidden'); }
+    function showTrackingSection() {
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('formSection').classList.add('hidden');
+
+      const myDocsSection = document.getElementById('myDocsSection');
+      if (myDocsSection) myDocsSection.classList.add('hidden');
+
+      document.getElementById('trackingSection').classList.remove('hidden');
+      document.getElementById('trackingResult').classList.add('hidden');
+      document.getElementById('trackDocNo').value = "";
+    }
+
+    function hideTrackingSection() {
+      document.getElementById('trackingSection').classList.add('hidden');
+
+      if (CURRENT_USER && CURRENT_USER.payerId) {
+        document.getElementById('formSection').classList.remove('hidden');
+      } else {
+        document.getElementById('loginSection').classList.remove('hidden');
+      }
+    }
     
     async function searchDocument() {
       const docNo = document.getElementById('trackDocNo').value.trim();
-      if (!docNo) return showAlert("ข้อมูลไม่ครบ", "กรุณากรอกหมายเลขเอกสารที่ต้องการค้นหา");
+      if (!docNo) {
+        showAlert("ข้อมูลไม่ครบ", "กรุณากรอกหมายเลขเอกสารที่ต้องการค้นหา");
+        return false;
+      }
       
       showLoading("กำลังค้นหาข้อมูล...");
       document.getElementById('trackingResult').classList.add('hidden');
@@ -314,8 +340,10 @@
         else if (data.status.includes('แก้') || data.status.includes('ยกเลิก') || data.status.includes('กลับ')) statusEl.className += "bg-red-100 text-red-700 border border-red-200";
         else statusEl.className += "bg-green-100 text-green-700 border border-green-200";
         document.getElementById('trackingResult').classList.remove('hidden');
+        return true;
       } else {
         showAlert("ไม่พบข้อมูล", response.message);
+        return false;
       }
     }
 
@@ -345,27 +373,307 @@
       }
     }
 
-    // --- Core Logic ---
-    async function handleLogin() {
-      const user = document.getElementById('loginUser').value.trim();
-      const pass = document.getElementById('loginPass').value.trim();
-      if (!user || !pass) return showAlert("ข้อมูลไม่ครบถ้วน", "กรุณากรอกรหัสผู้ใช้งานและรหัสผ่านให้ครบถ้วน");
-      showLoading("กำลังตรวจสอบสิทธิ์...");
-      const response = await fetchAPI('verifyLogin', { username: user, password: pass });
-      hideLoading();
-      if (response.success) {
-        document.getElementById('loginSection').classList.add('hidden');
-        document.getElementById('formSection').classList.remove('hidden');
-        document.getElementById('payerId').value = user;
-        document.getElementById('payerName').value = response.name;
-        document.getElementById('docDate').value = getCurrentDateFormatted();
-      } else {
-        showAlert("เข้าสู่ระบบล้มเหลว", response.message);
+
+
+    // --- My Documents Logic ---
+    function ensureMyDocsUI() {
+      // เพิ่มปุ่ม "งานของฉัน" ในหน้า Form หลังจาก Login สำเร็จ
+      if (!document.getElementById('myDocsQuickBar')) {
+        const formContent = document.querySelector('#formSection .electric-content');
+        const firstGrid = document.querySelector('#formSection .grid');
+
+        if (formContent && firstGrid) {
+          const bar = document.createElement('div');
+          bar.id = 'myDocsQuickBar';
+          bar.className = 'mb-6 grid grid-cols-1 md:grid-cols-2 gap-3';
+          bar.innerHTML = `
+            <button onclick="showMyDocsSection()" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold py-3 px-4 rounded-2xl transition-all duration-200 shadow-lg shadow-blue-600/25 text-base flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 7h18M3 12h18M3 17h18"></path>
+              </svg>
+              งานของฉัน
+            </button>
+            <button onclick="showTrackingSection()" class="w-full bg-white hover:bg-gray-50 active:scale-95 text-pea-600 font-bold py-3 px-4 rounded-2xl border border-pea-200 transition-all duration-200 text-base flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              ติดตามเลขเอกสาร
+            </button>
+          `;
+
+          formContent.insertBefore(bar, firstGrid);
+        }
+      }
+
+      // เพิ่ม Section งานของฉัน โดยสร้างผ่าน JavaScript เพื่อไม่กระทบ HTML เดิม
+      if (!document.getElementById('myDocsSection')) {
+        const section = document.createElement('div');
+        section.id = 'myDocsSection';
+        section.className = 'w-full max-w-2xl electric-wrapper hidden my-4 md:my-8 transition-all duration-500';
+
+        section.innerHTML = `
+          <div class="electric-content p-6 md:p-10 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pea-500 to-pea-700"></div>
+
+            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200/60">
+              <div>
+                <h2 class="text-2xl font-bold text-gray-900">งานของฉัน</h2>
+                <p class="text-pea-600 text-sm font-medium">แสดงเอกสารที่ผู้ใช้งานเคยลงคุมไว้</p>
+              </div>
+              <button onclick="hideMyDocsSection()" class="w-10 h-10 bg-gray-50 text-gray-500 rounded-full flex items-center justify-center hover:bg-gray-100 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+              <select id="myDocsStatus" class="ios-input px-4 py-3 rounded-2xl text-gray-800">
+                <option value="ทั้งหมด">สถานะทั้งหมด</option>
+                <option value="ลงคุม">ลงคุม</option>
+                <option value="เอกสารแก้ไข">เอกสารแก้ไข</option>
+                <option value="เอกสารถึง บป">เอกสารถึง บป</option>
+                <option value="จบขั้นตอน">จบขั้นตอน</option>
+              </select>
+
+              <input id="myDocsKeyword" type="text" placeholder="ค้นหา เช่น เลขเอกสาร/รายการ" class="ios-input md:col-span-2 px-4 py-3 rounded-2xl text-gray-800">
+            </div>
+
+            <button onclick="loadMyDocuments()" class="w-full bg-pea-600 hover:bg-pea-700 active:scale-95 text-white font-bold py-3 px-4 rounded-2xl transition-all duration-200 shadow-lg shadow-pea-600/30 text-base mb-5">
+              ค้นหางานของฉัน
+            </button>
+
+            <div id="myDocsSummary" class="text-sm text-gray-500 mb-3"></div>
+            <div id="myDocsList" class="space-y-3"></div>
+          </div>
+        `;
+
+        document.body.appendChild(section);
       }
     }
+
+    function showMyDocsSection() {
+      ensureMyDocsUI();
+
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('formSection').classList.add('hidden');
+      document.getElementById('trackingSection').classList.add('hidden');
+      document.getElementById('myDocsSection').classList.remove('hidden');
+
+      loadMyDocuments();
+    }
+
+    function hideMyDocsSection() {
+      const myDocsSection = document.getElementById('myDocsSection');
+      if (myDocsSection) myDocsSection.classList.add('hidden');
+
+      if (CURRENT_USER && CURRENT_USER.payerId) {
+        document.getElementById('formSection').classList.remove('hidden');
+      } else {
+        document.getElementById('loginSection').classList.remove('hidden');
+      }
+    }
+
+    async function loadMyDocuments() {
+      const payerId = CURRENT_USER.payerId || document.getElementById('payerId').value.trim();
+
+      if (!payerId) {
+        return showAlert('ไม่พบผู้ใช้งาน', 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+      }
+
+      const status = document.getElementById('myDocsStatus')
+        ? document.getElementById('myDocsStatus').value
+        : 'ทั้งหมด';
+
+      const keyword = document.getElementById('myDocsKeyword')
+        ? document.getElementById('myDocsKeyword').value.trim()
+        : '';
+
+      showLoading('กำลังโหลดงานของฉัน...');
+
+      const response = await fetchAPI('getMyDocuments', {
+        payerId: payerId,
+        status: status,
+        keyword: keyword,
+        limit: 50
+      });
+
+      hideLoading();
+
+      if (!response.success) {
+        return showAlert('โหลดข้อมูลไม่สำเร็จ', response.message || 'ไม่สามารถโหลดงานของฉันได้');
+      }
+
+      renderMyDocuments(response.data || []);
+    }
+
+    function renderMyDocuments(docs) {
+      const list = document.getElementById('myDocsList');
+      const summary = document.getElementById('myDocsSummary');
+
+      if (!list || !summary) return;
+
+      summary.textContent = `พบ ${docs.length} รายการล่าสุด`;
+
+      if (!docs.length) {
+        list.innerHTML = `
+          <div class="bg-gray-50 border border-gray-100 rounded-2xl p-6 text-center text-gray-500">
+            ไม่พบเอกสารตามเงื่อนไขที่ค้นหา
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = docs.map(doc => {
+        const amountNum = parseFloat(String(doc.amount || '').replace(/,/g, ''));
+        const amountText = isNaN(amountNum)
+          ? (doc.amount || '-')
+          : amountNum.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+
+        let statusClass = 'bg-green-100 text-green-700 border-green-200';
+
+        if ((doc.status || '').includes('แก้') || (doc.status || '').includes('กลับ')) {
+          statusClass = 'bg-red-100 text-red-700 border-red-200';
+        } else if ((doc.status || '').includes('บป') || (doc.status || '').includes('จบ') || (doc.status || '').includes('อนุมัติ')) {
+          statusClass = 'bg-blue-100 text-blue-700 border-blue-200';
+        }
+
+        const docNoArg = encodeURIComponent(doc.docNo || '');
+
+        return `
+          <div class="bg-white/90 border border-gray-100 rounded-2xl p-4 shadow-sm">
+            <div class="flex justify-between gap-3 items-start mb-3">
+              <div>
+                <div class="text-xs text-gray-500">เลขที่เอกสาร</div>
+                <div class="text-lg font-bold text-gray-900">${escapeHtml(doc.docNo || '-')}</div>
+              </div>
+              <div class="px-3 py-1 rounded-xl border text-sm font-bold ${statusClass}">
+                ${escapeHtml(doc.status || '-')}
+              </div>
+            </div>
+
+            <div class="space-y-1 text-sm">
+              <div class="flex justify-between gap-3">
+                <span class="text-gray-500">วันที่:</span>
+                <span class="font-semibold text-gray-800 text-right">${escapeHtml(doc.dateStr || '-')}</span>
+              </div>
+              <div class="flex justify-between gap-3">
+                <span class="text-gray-500">รายการ:</span>
+                <span class="font-semibold text-gray-800 text-right max-w-[230px] truncate">${escapeHtml(doc.item || '-')}</span>
+              </div>
+              <div class="flex justify-between gap-3">
+                <span class="text-gray-500">รายละเอียด:</span>
+                <span class="font-semibold text-gray-800 text-right max-w-[230px] truncate">${escapeHtml(doc.details || '-')}</span>
+              </div>
+              <div class="flex justify-between gap-3 pt-2 border-t border-gray-100">
+                <span class="text-gray-500">จำนวนเงิน:</span>
+                <span class="font-bold text-pea-600">฿${escapeHtml(amountText)}</span>
+              </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+              <button onclick="openDocFromMyList(decodeURIComponent('${docNoArg}'))" class="w-full bg-pea-600 hover:bg-pea-700 text-white font-bold py-2.5 px-3 rounded-xl transition">
+                ดูรายละเอียด
+              </button>
+
+              ${
+                (doc.status || '').includes('แก้')
+                  ? `<button onclick="openDocFromMyList(decodeURIComponent('${docNoArg}'), true)" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-3 rounded-xl transition">
+                      ส่งแก้ไขแล้ว
+                    </button>`
+                  : `<button disabled class="w-full bg-gray-100 text-gray-400 font-bold py-2.5 px-3 rounded-xl">
+                      ไม่ต้องแก้ไข
+                    </button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function openDocFromMyList(docNo, submitAfterOpen = false) {
+      if (!docNo) return;
+
+      const myDocsSection = document.getElementById('myDocsSection');
+      if (myDocsSection) myDocsSection.classList.add('hidden');
+
+      document.getElementById('formSection').classList.add('hidden');
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('trackingSection').classList.remove('hidden');
+
+      document.getElementById('trackDocNo').value = docNo;
+      const found = await searchDocument();
+
+      if (submitAfterOpen && found) {
+        submitCorrectionDone();
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    // --- Core Logic ---
+async function handleLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+
+  if (!user || !pass) {
+    return showAlert("ข้อมูลไม่ครบถ้วน", "กรุณากรอกรหัสผู้ใช้งานและรหัสผ่านให้ครบถ้วน");
+  }
+
+  showLoading("กำลังตรวจสอบสิทธิ์...");
+
+  const response = await fetchAPI('verifyLogin', {
+    username: user,
+    password: pass
+  });
+
+  hideLoading();
+
+  if (response.success) {
+    document.getElementById('loginSection').classList.add('hidden');
+    document.getElementById('formSection').classList.remove('hidden');
+
+    document.getElementById('payerId').value = user;
+    document.getElementById('payerName').value = response.name;
+    document.getElementById('docDate').value = getCurrentDateFormatted();
+
+    CURRENT_USER = {
+      payerId: user,
+      payerName: response.name
+    };
+
+    ensureMyDocsUI();
+
+  } else {
+    showAlert("เข้าสู่ระบบล้มเหลว", response.message);
+  }
+}
     function confirmLogout() { document.getElementById('confirmModal').classList.remove('hidden'); }
     function closeConfirmModal() { document.getElementById('confirmModal').classList.add('hidden'); }
-    function executeLogout() { closeConfirmModal(); document.getElementById('loginUser').value = ""; document.getElementById('loginPass').value = ""; document.getElementById('loginSection').classList.remove('hidden'); document.getElementById('formSection').classList.add('hidden'); }
+    function executeLogout() {
+      closeConfirmModal();
+
+      CURRENT_USER = {
+        payerId: '',
+        payerName: ''
+      };
+
+      document.getElementById('loginUser').value = "";
+      document.getElementById('loginPass').value = "";
+      document.getElementById('loginSection').classList.remove('hidden');
+      document.getElementById('formSection').classList.add('hidden');
+      document.getElementById('trackingSection').classList.add('hidden');
+
+      const myDocsSection = document.getElementById('myDocsSection');
+      if (myDocsSection) myDocsSection.classList.add('hidden');
+    }
     async function submitForm() {
       const formData = {
         payerId: document.getElementById('payerId').value,
