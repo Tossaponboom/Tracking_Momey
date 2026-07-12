@@ -311,12 +311,12 @@
             <div class="flex justify-between items-start"><span class="text-gray-500 flex-shrink-0">รายการ:</span><span id="trackResItem" class="font-semibold text-gray-800 text-right truncate max-w-[150px]">-</span></div>
             <div class="flex justify-between items-start"><span class="text-gray-500 flex-shrink-0">รายละเอียด:</span><span id="trackResDetail" class="font-semibold text-gray-800 text-right truncate max-w-[150px] cursor-help">-</span></div>
             <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100"><span class="text-gray-500">จำนวนเงิน:</span><span id="trackResAmount" class="font-bold text-pea-600 text-base">฿-</span></div>
-            <div class="mt-5 pt-4 border-t border-gray-200/60">
-              <button onclick="submitCorrectionDone()" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold py-3 px-4 rounded-2xl transition-all duration-200 shadow-lg shadow-amber-500/25 text-base flex items-center justify-center gap-2">
+            <div id="correctionActionBox" class="mt-5 pt-4 border-t border-gray-200/60">
+              <button id="correctionDoneBtn" onclick="submitCorrectionDone()" class="w-full bg-gray-100 text-gray-400 font-bold py-3 px-4 rounded-2xl transition-all duration-200 text-base flex items-center justify-center gap-2 cursor-not-allowed" disabled>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                บันทึกว่าส่งงานแก้ไขแล้ว
+                รอผลการตรวจเอกสาร
               </button>
-              <p class="text-[11px] text-gray-500 text-center mt-2">ใช้เมื่อผู้ใช้นำเอกสารที่แก้ไขกลับมาส่งแล้ว ระบบจะบันทึกวันที่ลงคอลัมน์ AA</p>
+              <p id="correctionHelpText" class="text-[11px] text-gray-500 text-center mt-2">ปุ่มส่งแก้ไขจะแสดงเฉพาะกรณีสถานะเป็น “เอกสารแก้ไข” เท่านั้น</p>
             </div>
           </div>
         </div>
@@ -396,6 +396,7 @@
         payerId: '',
         payerName: ''
     };
+    let CURRENT_TRACK_STATUS = '';
     // รายการเบิก
     const itemsList = ["51010010 - ค่าซื้อไฟฟ้า-กฟผ.", "51010060 - ค่าซื้อไฟฟ้า-Rooftop", "52010010 - เงินเดือนพนักงาน", "52010030 - OT พนักงาน", "52010080 - ค่าตอบแทนการอยู่เวรปฏิบัติการระบบไฟฟ้าแบบเฝ้าระวัง", "52010990 - ค่าตอบแทนอื่น - พนง.", "52011020 - เงินสมทบ กสช.", "52012050 - เงินเพิ่มพิเศษอยู่กะ", "52012060 - ค่าโทรศัพท์บ้านพัก", "52012070 - ค่าโทรศัพท์มือถือ", "52020010 - เงินช่วยเหลือค่าไฟฯ", "52020020 - เงินช่วยฯUniform พนง", "52020030 - เงินช่วยฯค่าเรียนบุต", "52020040 - เงินช่วยเหลือบุตร", "52020990 - เงินช่วยเหลืออื่น", "52021010 - ค่ารักษาพยาบาล-พนง.", "52021020 - ค่ารักษา-ครอบครัวพนง", "52022010 - ค่าพาหนะเดินทาง-พนง.", "52022020 - ค่าเบี้ยเลี้ยง-พนง.", "52022030 - ค่าที่พัก-พนักงาน", "52022050 - ค่าชดเชยการใช้พาหนะฯ", "52029010 - ค่าเช่าบ้าน", "52030030 - คชจ. ประชุมชี้แจง", "53021020 - ค่าประชาสัมพันธ์อื่น", "53030010 - ค่าวัสดุสำนักงาน", "53030030 - ค่าวัสดุเบ็ดเตล็ดฯ", "53031010 - ค่าน้ำดื่ม", "53031020 - ค่าน้ำประปา", "53031030 - ค่าไฟฟ้า", "53032010 - ค่าใช้บริการโทรศัพท์", "53032020 - ค่าบำรุงฯโทรศัพท์", "53032060 - ค่าไปรษณีย์", "53033020 - ค่าเช่าสิ่งปลูกสร้าง", "53034010 - ค่าจ้างเหมาความสะอาด", "53034020 - ค่ารักษาความปลอดภัย", "53034040 - ค่าบำรุงฯบริเวณ สนง.", "53039010 - ค่าเชื้อเพลิงยานพาหฯ", "53039020 - ค่าหนังสือและสื่อฯ", "53039990 - ค่าใช้จ่ายเบ็ดเตล็ด", "53051040 - ค่าซ่อมฯบำรุงฯ-อาคาร", "53051050 - ค่าซ่อม/บำรุงฯ-ยานฯ", "53051060 - ค่าซ่อม/บำรุงฯ-คอมฯ", "53051090 - วัสดุเบ็ดเตล็ดช่าง", "53051100 - ค่าซ่อมอุปกรณ์ในสนง.", "53051120 - อุปกรณ์ความปลอดภัย", "53051990 - ค่าซ่อมฯ/บำรุงรักษา", "53052030 - คชจ. ดนง.ก่อสร้าง", "53063010 - ค่ารับรอง", "53064010 - ค่าภาษีสินทรัพย์", "53064020 - ภาษีและค่าFeeพาหนะ", "53065010 - เงินชดเชยมนุษยธรรม", "53069020 - ค่าขนส่ง ขนย้าย", "53069030 - ค่าจ้างเหมายานพาหนะ", "53069090 - ค่าปป.ส/ทที่มิใช่กฟภ", "53069990 - ค่าใช้จ่ายอื่น", "54020020 - Dep.-อาคารสำนักงาน", "54040010 - Dep.-สายส่ง/จำหน่าย", "54040030 - Dep.-อุปกรณ์สถานี", "54040040 - Dep-มป.ผ่านการใช้งาน", "54040050 - Dep-มต.ผ่านการใช้งาน", "54050010 - Dep.-ตกแต่ง สนง.", "54050020 - Dep-อุปกรณ์ประจำสนง.", "54050030 - Dep.-เมนเฟรม/มินิคอม", "54050040 - Dep.-PC และอุปกรณ์", "54051020 - Dep.-Equip.โรงซ่อม", "54051040 - Dep.-Equip.เบ็ดเตล็ด", "54052010 - Dep.-อุปกรณ์สื่อสาร", "54052020 - Dep.-สายใยแก้วภายนอก", "54060030 - Dep.-รถยนต์บรรทุก", "54060040 - Dep.-ยานพาหนะอื่น", "54070010 - Amort.-โปรแกรมคอมฯ", "54080010 - Dep.ROUที่ดินส่วนปป.", "54080020 - Dep.ROUอาคาร สปส.", "54080060 - Dep.ROUยานพาหนะ", "99999999 - ดัมมี่งบประมาณ"];
     // ฟังก์ชันเชื่อมต่อกับ Google Apps Script (Fetch API)
@@ -454,6 +455,45 @@
       });
     }
 
+    function isCorrectionStatus(status) {
+      const s = String(status || '').trim();
+      return s.includes('แก้') || s.includes('กลับ');
+    }
+
+    function updateCorrectionActionByStatus(status) {
+      const btn = document.getElementById('correctionDoneBtn');
+      const help = document.getElementById('correctionHelpText');
+      if (!btn || !help) return;
+
+      const s = String(status || '').trim();
+      const isCorrection = isCorrectionStatus(s);
+
+      if (isCorrection) {
+        btn.disabled = false;
+        btn.className = "w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold py-3 px-4 rounded-2xl transition-all duration-200 shadow-lg shadow-amber-500/25 text-base flex items-center justify-center gap-2";
+        btn.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          บันทึกว่าส่งงานแก้ไขแล้ว
+        `;
+        help.textContent = 'ใช้เมื่อผู้ใช้นำเอกสารที่แก้ไขกลับมาส่งแล้ว ระบบจะบันทึกวันที่ลงคอลัมน์ AA';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.className = "w-full bg-gray-100 text-gray-400 font-bold py-3 px-4 rounded-2xl transition-all duration-200 text-base flex items-center justify-center gap-2 cursor-not-allowed";
+      btn.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        ${s === 'ลงคุม' ? 'รอผู้ตรวจดำเนินการ' : 'ยังไม่ต้องส่งแก้ไข'}
+      `;
+      help.textContent = s === 'ลงคุม'
+        ? 'เอกสารอยู่ในสถานะลงคุม ผู้ตรวจยังไม่ได้แจ้งแก้ไข จึงไม่ต้องกดบันทึกส่งงานแก้ไข'
+        : `เอกสารสถานะ “${s || '-'}” ยังไม่ใช่ขั้นตอนส่งงานแก้ไข`;
+    }
+
     function showHomeSection() {
       if (!(CURRENT_USER && CURRENT_USER.payerId)) return;
       document.getElementById('loginSection').classList.add('hidden');
@@ -473,6 +513,8 @@
       document.getElementById('trackingSection').classList.remove('hidden');
       document.getElementById('trackingResult').classList.add('hidden');
       document.getElementById('trackDocNo').value = "";
+      CURRENT_TRACK_STATUS = '';
+      updateCorrectionActionByStatus('');
       if (CURRENT_USER && CURRENT_USER.payerId) setBottomNav('tracking');
     }
 
@@ -500,6 +542,7 @@
       
       if (response.success) {
         const data = response.data;
+        CURRENT_TRACK_STATUS = data.status || '';
         document.getElementById('trackResNo').textContent = data.docNo;
         document.getElementById('trackResDate').textContent = data.dateStr;
         document.getElementById('trackResName').textContent = data.payerName;
@@ -517,6 +560,7 @@
         if (data.status.includes('บป') || data.status.includes('เสร็จ') || data.status.includes('อนุมัติ')) statusEl.className += "bg-blue-100 text-blue-700 border border-blue-200";
         else if (data.status.includes('แก้') || data.status.includes('ยกเลิก') || data.status.includes('กลับ')) statusEl.className += "bg-red-100 text-red-700 border border-red-200";
         else statusEl.className += "bg-green-100 text-green-700 border border-green-200";
+        updateCorrectionActionByStatus(CURRENT_TRACK_STATUS);
         document.getElementById('trackingResult').classList.remove('hidden');
         return true;
       } else {
@@ -534,6 +578,13 @@
       const docNo = (docNoFromResult && docNoFromResult !== '-') ? docNoFromResult : docNoFromInput;
 
       if (!docNo) return showAlert("ไม่พบเลขที่เอกสาร", "กรุณาค้นหาเอกสารก่อนบันทึกวันที่ส่งแก้ไขแล้ว");
+
+      if (!isCorrectionStatus(CURRENT_TRACK_STATUS)) {
+        return showAlert(
+          "ยังไม่อยู่ขั้นตอนแก้ไข",
+          `เอกสารเลขที่ ${docNo} อยู่ในสถานะ “${CURRENT_TRACK_STATUS || '-'}” จึงยังไม่สามารถบันทึกว่าส่งงานแก้ไขแล้วได้`
+        );
+      }
 
       const ok = confirm(`ยืนยันบันทึกวันที่ส่งแก้ไขแล้วของเอกสารเลขที่ ${docNo} ใช่หรือไม่?`);
       if (!ok) return;
