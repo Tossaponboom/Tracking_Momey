@@ -179,7 +179,7 @@
       width: min(94vw, 560px);
       z-index: 50;
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: .35rem;
       padding: .55rem;
       border-radius: 26px;
@@ -198,7 +198,7 @@
       align-items: center;
       gap: .18rem;
       color: #687082;
-      font-size: .72rem;
+      font-size: .66rem;
       font-weight: 700;
       transition: all .18s ease;
     }
@@ -218,6 +218,18 @@
       border: 1px solid rgba(116, 29, 136, .08);
       box-shadow: 0 12px 28px rgba(17, 24, 39, .07);
     }
+    .overdue-card {
+      background: linear-gradient(135deg, rgba(220,53,69,.10), rgba(199,145,27,.10), rgba(255,255,255,.78));
+      border: 1px solid rgba(220,53,69,.18);
+    }
+    .overdue-dot {
+      width: .6rem;
+      height: .6rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #DC3545, #C7911B);
+      box-shadow: 0 0 0 4px rgba(220,53,69,.08);
+    }
+
     @media (max-width: 640px) {
       body { align-items: flex-start; padding-top: 1rem; }
       .electric-wrapper { border-radius: 30px; }
@@ -386,6 +398,7 @@
   <nav id="bottomNav" class="ios-bottom-nav hidden" aria-label="เมนูหลัก">
     <button type="button" data-tab="home" onclick="showHomeSection()" class="ios-tab active"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6"></path></svg><span>หน้าหลัก</span></button>
     <button type="button" data-tab="mydocs" onclick="showMyDocsSection()" class="ios-tab"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5l7 7v9a2 2 0 01-2 2z"></path></svg><span>งานของฉัน</span></button>
+    <button type="button" data-tab="dashboard" onclick="showDashboardSection()" class="ios-tab"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg><span>ภาพรวม</span></button>
     <button type="button" data-tab="tracking" onclick="showTrackingSection()" class="ios-tab"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"></path></svg><span>ติดตาม</span></button>
     <button type="button" data-tab="logout" onclick="confirmLogout()" class="ios-tab"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span>ออก</span></button>
   </nav>
@@ -500,6 +513,8 @@
       document.getElementById('trackingSection').classList.add('hidden');
       const myDocsSection = document.getElementById('myDocsSection');
       if (myDocsSection) myDocsSection.classList.add('hidden');
+      const dashboardSection = document.getElementById('dashboardSection');
+      if (dashboardSection) dashboardSection.classList.add('hidden');
       document.getElementById('formSection').classList.remove('hidden');
       setBottomNav('home');
     }
@@ -510,6 +525,8 @@
       document.getElementById('formSection').classList.add('hidden');
       const myDocsSection = document.getElementById('myDocsSection');
       if (myDocsSection) myDocsSection.classList.add('hidden');
+      const dashboardSection = document.getElementById('dashboardSection');
+      if (dashboardSection) dashboardSection.classList.add('hidden');
       document.getElementById('trackingSection').classList.remove('hidden');
       document.getElementById('trackingResult').classList.add('hidden');
       document.getElementById('trackDocNo').value = "";
@@ -604,6 +621,315 @@
 
 
 
+
+    // --- Dashboard Logic ---
+    function ensureDashboardUI() {
+      if (document.getElementById('dashboardSection')) return;
+
+      const section = document.createElement('div');
+      section.id = 'dashboardSection';
+      section.className = 'w-full max-w-3xl electric-wrapper hidden my-4 md:my-8 transition-all duration-500';
+      section.innerHTML = `
+        <div class="electric-content p-6 md:p-10 relative overflow-hidden">
+          <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pea-500 via-pea-600 to-[#C7911B]"></div>
+
+          <div class="flex justify-between items-start gap-4 mb-6 pb-4 border-b border-gray-200/60">
+            <div>
+              <div class="ios-mini-pill mb-3"><span>📊</span><span>Dashboard</span></div>
+              <h2 class="text-2xl md:text-3xl font-black text-gray-950 leading-tight">ภาพรวมงานทั้งหมด</h2>
+              <p class="text-pea-600 text-sm md:text-base font-semibold mt-1">สรุปสถานะเอกสารตามปีที่ลงคุม</p>
+              <p class="text-gray-500 text-xs mt-1">ข้อมูลนี้เป็นภาพรวมทั้งหมด ไม่ใช่เฉพาะงานของผู้ใช้งาน</p>
+            </div>
+            <button onclick="showHomeSection()" class="w-11 h-11 bg-gray-50 text-gray-500 rounded-full flex items-center justify-center hover:bg-gray-100 transition flex-shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+            <select id="dashboardYear" class="ios-input px-4 py-3 rounded-2xl text-gray-800 font-semibold">
+              <option value="">กำลังโหลดปี...</option>
+            </select>
+            <select id="dashboardStatus" class="ios-input px-4 py-3 rounded-2xl text-gray-800 font-semibold">
+              <option value="ทั้งหมด">สถานะทั้งหมด</option>
+              <option value="ลงคุม">ลงคุม</option>
+              <option value="เอกสารแก้ไข">เอกสารแก้ไข</option>
+              <option value="เอกสารถึง บป">เอกสารถึง บป</option>
+              <option value="จบขั้นตอน">จบขั้นตอน</option>
+            </select>
+            <select id="dashboardOverdueDays" class="ios-input px-4 py-3 rounded-2xl text-gray-800 font-semibold">
+              <option value="3">ล่าช้าเกิน 3 วัน</option>
+              <option value="5">ล่าช้าเกิน 5 วัน</option>
+              <option value="7">ล่าช้าเกิน 7 วัน</option>
+              <option value="15">ล่าช้าเกิน 15 วัน</option>
+            </select>
+            <input id="dashboardKeyword" type="text" placeholder="ค้นหาเลข/ผู้เบิก/รายการ" class="ios-input md:col-span-2 px-4 py-3 rounded-2xl text-gray-800">
+          </div>
+
+          <button onclick="loadDashboardData()" class="w-full bg-pea-600 hover:bg-pea-700 active:scale-95 text-white font-bold py-3.5 px-4 rounded-2xl transition-all duration-200 text-base mb-5 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v16h16M8 16v-4m4 4V8m4 8v-6"></path></svg>
+            แสดงภาพรวมงาน
+          </button>
+
+          <div id="dashboardYearNote" class="text-sm text-gray-500 mb-3"></div>
+          <div id="dashboardStats" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-5"></div>
+          <div id="dashboardOverdue" class="ios-card-line overdue-card rounded-3xl p-4 mb-5"></div>
+          <div id="dashboardBars" class="ios-card-line rounded-3xl p-4 mb-5"></div>
+          <div id="dashboardItems" class="ios-card-line rounded-3xl p-4 mb-5"></div>
+
+          <div class="flex items-center justify-between gap-3 mb-3">
+            <h3 class="font-black text-gray-900 text-lg">รายการเอกสารล่าสุด</h3>
+            <span id="dashboardDocCount" class="text-xs text-gray-500"></span>
+          </div>
+          <div id="dashboardDocsList" class="space-y-3"></div>
+        </div>
+      `;
+      document.body.appendChild(section);
+    }
+
+    function showDashboardSection() {
+      if (!(CURRENT_USER && CURRENT_USER.payerId)) return;
+      ensureDashboardUI();
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('formSection').classList.add('hidden');
+      document.getElementById('trackingSection').classList.add('hidden');
+      const myDocsSection = document.getElementById('myDocsSection');
+      if (myDocsSection) myDocsSection.classList.add('hidden');
+      document.getElementById('dashboardSection').classList.remove('hidden');
+      setBottomNav('dashboard');
+      loadDashboardData();
+    }
+
+    async function loadDashboardData() {
+      ensureDashboardUI();
+      const yearEl = document.getElementById('dashboardYear');
+      const statusEl = document.getElementById('dashboardStatus');
+      const overdueEl = document.getElementById('dashboardOverdueDays');
+      const keywordEl = document.getElementById('dashboardKeyword');
+
+      const year = yearEl ? yearEl.value : '';
+      const status = statusEl ? statusEl.value : 'ทั้งหมด';
+      const overdueDays = overdueEl ? overdueEl.value : '3';
+      const keyword = keywordEl ? keywordEl.value.trim() : '';
+
+      showLoading('กำลังโหลด Dashboard...');
+      const response = await fetchAPI('getDashboardData', {
+        year: year,
+        status: status,
+        overdueDays: overdueDays,
+        keyword: keyword,
+        limit: 50
+      });
+      hideLoading();
+
+      if (!response.success) {
+        return showAlert('โหลด Dashboard ไม่สำเร็จ', response.message || 'ไม่สามารถโหลดภาพรวมงานได้');
+      }
+
+      renderDashboard(response);
+    }
+
+    function renderDashboard(data) {
+      const yearEl = document.getElementById('dashboardYear');
+      const years = data.years || [];
+      const selectedYear = data.selectedYear || 'ทั้งหมด';
+
+      if (yearEl) {
+        const oldValue = yearEl.value;
+        const yearOptions = ['ทั้งหมด', ...years];
+        yearEl.innerHTML = yearOptions.map(y => `<option value="${escapeHtml(y)}">${y === 'ทั้งหมด' ? 'ปีทั้งหมด' : 'ปี ' + escapeHtml(y)}</option>`).join('');
+        yearEl.value = oldValue || selectedYear;
+        if (![...yearEl.options].some(o => o.value === yearEl.value)) yearEl.value = selectedYear;
+      }
+
+      const summary = data.summary || {};
+      const statuses = summary.statuses || {};
+      const overdueReview = summary.overdueReview || { total: 0, thresholdDays: 3, documents: [] };
+      const total = Number(summary.total || 0);
+      const amountText = Number(summary.amountTotal || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const note = document.getElementById('dashboardYearNote');
+      if (note) note.textContent = `${selectedYear === 'ทั้งหมด' ? 'แสดงทุกปี' : 'แสดงข้อมูลปี ' + selectedYear} • มูลค่ารวม ฿${amountText} • งานตรวจล่าช้าเกิน ${overdueReview.thresholdDays || 3} วัน`;
+
+      const statList = [
+        { key: 'ทั้งหมด', label: 'ทั้งหมด', value: total, cls: 'text-pea-600', icon: '📁' },
+        { key: 'ลงคุม', label: 'ลงคุม', value: statuses['ลงคุม'] || 0, cls: 'text-green-700', icon: '✅' },
+        { key: 'เอกสารแก้ไข', label: 'เอกสารแก้ไข', value: statuses['เอกสารแก้ไข'] || 0, cls: 'text-red-600', icon: '⚠️' },
+        { key: 'เอกสารถึง บป', label: 'ถึง บป', value: statuses['เอกสารถึง บป'] || 0, cls: 'text-blue-600', icon: '📨' },
+        { key: 'จบขั้นตอน', label: 'จบขั้นตอน', value: statuses['จบขั้นตอน'] || 0, cls: 'text-purple-700', icon: '🏁' },
+        { key: 'ล่าช้า', label: 'ตรวจล่าช้า', value: overdueReview.total || 0, cls: 'text-red-600', icon: '⏰' }
+      ];
+
+      const stats = document.getElementById('dashboardStats');
+      if (stats) {
+        stats.innerHTML = statList.map(s => `
+          <div class="ios-card-line rounded-3xl p-4">
+            <div class="text-xl mb-1">${s.icon}</div>
+            <div class="text-xs text-gray-500 font-bold">${s.label}</div>
+            <div class="text-2xl font-black ${s.cls}">${s.value}</div>
+          </div>
+        `).join('');
+      }
+
+      const overdueBox = document.getElementById('dashboardOverdue');
+      if (overdueBox) {
+        renderDashboardOverdue(overdueBox, overdueReview);
+      }
+
+      const bars = document.getElementById('dashboardBars');
+      if (bars) {
+        const barRows = statList.slice(1).map(s => {
+          const pct = total > 0 ? Math.round((s.value / total) * 100) : 0;
+          return `
+            <div class="mb-3 last:mb-0">
+              <div class="flex justify-between text-sm mb-1"><span class="font-bold text-gray-700">${s.label}</span><span class="text-gray-500">${s.value} รายการ • ${pct}%</span></div>
+              <div class="h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full rounded-full bg-gradient-to-r from-pea-600 via-pea-500 to-[#C7911B]" style="width:${pct}%"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+        bars.innerHTML = `<h3 class="font-black text-gray-900 mb-3">สัดส่วนตามสถานะ</h3>${barRows || '<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>'}`;
+      }
+
+      const items = document.getElementById('dashboardItems');
+      if (items) {
+        const itemSummary = data.itemSummary || [];
+        if (!itemSummary.length) {
+          items.innerHTML = `<h3 class="font-black text-gray-900 mb-2">ประเภท/รายการเบิกที่พบบ่อย</h3><p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>`;
+        } else {
+          items.innerHTML = `
+            <h3 class="font-black text-gray-900 mb-3">ประเภท/รายการเบิกที่พบบ่อย</h3>
+            <div class="space-y-2">
+              ${itemSummary.map(item => `
+                <div class="flex justify-between gap-3 text-sm border-b border-gray-100 pb-2 last:border-b-0 last:pb-0">
+                  <span class="font-semibold text-gray-700 truncate">${escapeHtml(item.item || '-')}</span>
+                  <span class="font-black text-pea-600 flex-shrink-0">${item.total || 0}</span>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+      }
+
+      const docs = data.documents || [];
+      const count = document.getElementById('dashboardDocCount');
+      if (count) count.textContent = `แสดง ${docs.length} รายการ`;
+      renderDashboardDocs(docs);
+    }
+
+    function renderDashboardOverdue(container, overdueReview) {
+      const thresholdDays = Number(overdueReview && overdueReview.thresholdDays ? overdueReview.thresholdDays : 3);
+      const docs = overdueReview && Array.isArray(overdueReview.documents) ? overdueReview.documents : [];
+      const total = Number(overdueReview && overdueReview.total ? overdueReview.total : docs.length);
+
+      if (!total) {
+        container.innerHTML = `
+          <div class="flex items-start gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-green-100 text-green-700 flex items-center justify-center text-xl flex-shrink-0">✓</div>
+            <div>
+              <h3 class="font-black text-gray-900">งานตรวจล่าช้ากว่ากำหนด</h3>
+              <p class="text-sm text-gray-500 mt-1">ไม่พบงานสถานะ “ลงคุม” ที่ค้างเกิน ${thresholdDays} วัน ตามปีที่เลือก</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="flex items-start justify-between gap-3 mb-4">
+          <div class="flex items-start gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-red-100 text-red-700 flex items-center justify-center text-xl flex-shrink-0">⏰</div>
+            <div>
+              <h3 class="font-black text-gray-900">งานตรวจล่าช้ากว่ากำหนด</h3>
+              <p class="text-sm text-gray-500 mt-1">สถานะ “ลงคุม” ที่ค้างเกิน ${thresholdDays} วัน พบทั้งหมด <span class="font-black text-red-600">${total}</span> งาน</p>
+            </div>
+          </div>
+        </div>
+        <div class="space-y-2">
+          ${docs.map(doc => {
+            const docNoArg = encodeURIComponent(doc.docNo || '');
+            const ageDays = Number(doc.ageDays || 0);
+            return `
+              <div class="bg-white/80 border border-red-100 rounded-2xl p-3">
+                <div class="flex justify-between gap-3 items-start">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1"><span class="overdue-dot flex-shrink-0"></span><span class="font-black text-gray-900">เลขที่ ${escapeHtml(doc.docNo || '-')}</span></div>
+                    <div class="text-xs text-gray-500 truncate">${escapeHtml(doc.payerName || '-')} • ${escapeHtml(doc.item || '-')}</div>
+                    <div class="text-xs text-gray-500 mt-1">วันที่ลงคุม ${escapeHtml(doc.dateStr || '-')} • ${escapeHtml(doc.division || '-')}</div>
+                  </div>
+                  <div class="text-right flex-shrink-0">
+                    <div class="px-3 py-1 rounded-xl bg-red-100 text-red-700 border border-red-200 text-xs font-black">${ageDays} วัน</div>
+                    <button onclick="openDashboardDoc(decodeURIComponent('${docNoArg}'))" class="mt-2 text-xs font-bold text-pea-600 hover:text-pea-700">ดูรายละเอียด</button>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        ${total > docs.length ? `<p class="text-xs text-gray-500 mt-3 text-center">แสดง ${docs.length} จากทั้งหมด ${total} งาน</p>` : ''}
+      `;
+    }
+
+    function renderDashboardDocs(docs) {
+      const list = document.getElementById('dashboardDocsList');
+      if (!list) return;
+
+      if (!docs.length) {
+        list.innerHTML = `<div class="bg-gray-50 border border-gray-100 rounded-2xl p-6 text-center text-gray-500">ไม่พบเอกสารตามเงื่อนไขที่ค้นหา</div>`;
+        return;
+      }
+
+      list.innerHTML = docs.map(doc => {
+        const amountNum = parseFloat(String(doc.amount || '').replace(/,/g, ''));
+        const amountText = isNaN(amountNum) ? (doc.amount || '-') : amountNum.toLocaleString('th-TH', { minimumFractionDigits: 2 });
+        const docNoArg = encodeURIComponent(doc.docNo || '');
+        return `
+          <div class="bg-white/90 border border-gray-100 rounded-2xl p-4 shadow-sm">
+            <div class="flex justify-between gap-3 items-start mb-2">
+              <div>
+                <div class="text-xs text-gray-500">เลขที่เอกสาร</div>
+                <div class="text-lg font-black text-gray-900">${escapeHtml(doc.docNo || '-')}</div>
+              </div>
+              <div class="px-3 py-1 rounded-xl border text-sm font-bold ${getStatusBadgeClass(doc.status || '')}">${escapeHtml(doc.status || '-')}</div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+              <div class="flex justify-between gap-3"><span class="text-gray-500">วันที่:</span><span class="font-semibold text-gray-800 text-right">${escapeHtml(doc.dateStr || '-')}</span></div>
+              <div class="flex justify-between gap-3"><span class="text-gray-500">ผู้เบิก:</span><span class="font-semibold text-gray-800 text-right truncate max-w-[220px]">${escapeHtml(doc.payerName || '-')}</span></div>
+              <div class="flex justify-between gap-3 md:col-span-2"><span class="text-gray-500">รายการ:</span><span class="font-semibold text-gray-800 text-right truncate max-w-[360px]">${escapeHtml(doc.item || '-')}</span></div>
+              <div class="flex justify-between gap-3"><span class="text-gray-500">แผนก:</span><span class="font-semibold text-gray-800 text-right">${escapeHtml(doc.division || '-')}</span></div>
+              <div class="flex justify-between gap-3"><span class="text-gray-500">จำนวนเงิน:</span><span class="font-black text-pea-600">฿${escapeHtml(amountText)}</span></div>
+              ${doc.normalizedStatus === 'ลงคุม' && doc.ageDays ? `<div class="flex justify-between gap-3 md:col-span-2"><span class="text-gray-500">อายุงาน:</span><span class="font-bold ${doc.isOverdueReview ? 'text-red-600' : 'text-green-700'}">${escapeHtml(doc.ageDays)} วัน${doc.isOverdueReview ? ' • ตรวจล่าช้า' : ''}</span></div>` : ''}
+            </div>
+            <button onclick="openDashboardDoc(decodeURIComponent('${docNoArg}'))" class="mt-4 w-full bg-pea-600 hover:bg-pea-700 text-white font-bold py-2.5 px-3 rounded-xl transition">ดูรายละเอียด</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getStatusBadgeClass(status) {
+      const s = String(status || '');
+      if (s.includes('แก้') || s.includes('กลับ')) return 'bg-red-100 text-red-700 border-red-200';
+      if (s.includes('บป')) return 'bg-blue-100 text-blue-700 border-blue-200';
+      if (s.includes('จบ') || s.includes('เสร็จ') || s.includes('อนุมัติ')) return 'bg-purple-100 text-purple-700 border-purple-200';
+      return 'bg-green-100 text-green-700 border-green-200';
+    }
+
+    async function openDashboardDoc(docNo) {
+      if (!docNo) return;
+      const dashboardSection = document.getElementById('dashboardSection');
+      if (dashboardSection) dashboardSection.classList.add('hidden');
+      const myDocsSection = document.getElementById('myDocsSection');
+      if (myDocsSection) myDocsSection.classList.add('hidden');
+      document.getElementById('formSection').classList.add('hidden');
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('trackingSection').classList.remove('hidden');
+      document.getElementById('trackDocNo').value = docNo;
+      setBottomNav('tracking');
+      await searchDocument();
+    }
+
     // --- My Documents Logic ---
     function ensureMyDocsUI() {
       // เพิ่มปุ่ม "งานของฉัน" ในหน้า Form หลังจาก Login สำเร็จ
@@ -686,6 +1012,8 @@
       document.getElementById('loginSection').classList.add('hidden');
       document.getElementById('formSection').classList.add('hidden');
       document.getElementById('trackingSection').classList.add('hidden');
+      const dashboardSection = document.getElementById('dashboardSection');
+      if (dashboardSection) dashboardSection.classList.add('hidden');
       document.getElementById('myDocsSection').classList.remove('hidden');
       setBottomNav('mydocs');
       loadMyDocuments();
@@ -824,6 +1152,8 @@
 
       const myDocsSection = document.getElementById('myDocsSection');
       if (myDocsSection) myDocsSection.classList.add('hidden');
+      const dashboardSection = document.getElementById('dashboardSection');
+      if (dashboardSection) dashboardSection.classList.add('hidden');
 
       document.getElementById('formSection').classList.add('hidden');
       document.getElementById('loginSection').classList.add('hidden');
@@ -878,6 +1208,7 @@ async function handleLogin() {
     };
 
     ensureMyDocsUI();
+    ensureDashboardUI();
     setBottomNav('home');
 
   } else {
@@ -896,6 +1227,8 @@ async function handleLogin() {
       document.getElementById('trackingSection').classList.add('hidden');
       const myDocsSection = document.getElementById('myDocsSection');
       if (myDocsSection) myDocsSection.classList.add('hidden');
+      const dashboardSection = document.getElementById('dashboardSection');
+      if (dashboardSection) dashboardSection.classList.add('hidden');
       const nav = document.getElementById('bottomNav');
       if (nav) nav.classList.add('hidden');
     }
